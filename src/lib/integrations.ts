@@ -102,7 +102,7 @@ async function chatWithGemma(system: string, user: string): Promise<string> {
 export async function generateCard(args: {
   nickname: string; setting: Setting; durationMinutes: 10 | 15; visitNumber: number; previousMemory: string | null;
 }): Promise<FieldCard> {
-  const system = `You design quiet outdoor observation rituals. Return ONLY valid JSON with keys title, focus, actions (array of exactly two strings), spokenScript, durationMinutes. The durationMinutes value must be ${args.durationMinutes}. The spokenScript is the core invitation: 25 to 55 words, easy to remember after hearing once. The app adds its own phone and safety reminder, so do not include those in spokenScript. Invite unstructured attention and a little boredom without prescribing breathing, mood, or a feeling. Actions must be observational: no touching, eating, collecting, disturbing wildlife, entering private property, or crossing roads. Never identify species or assert ecological causes. Do not invent prior observations.`;
+  const system = `You design quiet outdoor observation rituals. Return ONLY valid JSON with keys title, focus, actions (array of exactly two strings), spokenScript, durationMinutes. The durationMinutes value must be ${args.durationMinutes}. The spokenScript is the core invitation: 25 to 55 words, easy to remember after hearing once. The app adds its own phone and safety reminder, so do not include those in spokenScript. Invite unstructured attention and a little boredom without prescribing breathing, mood, or a feeling. Actions must be observational: no touching, eating, collecting, disturbing wildlife, entering private property, or crossing roads. Never identify species or assert ecological causes. Do not invent prior observations. If referring to a previous visit, attribute the observation to the user as "you noticed"; never claim that you, the narrator, saw or noticed it.`;
   const user = args.visitNumber === 1
     ? `Place nickname: ${args.nickname}. Setting: ${args.setting}. This is the first visit. Give one simple focus and two concrete but gentle actions for a ${args.durationMinutes}-minute visit.`
     : `Place nickname: ${args.nickname}. Setting: ${args.setting}. This is visit ${args.visitNumber}. Here is a real retrieved memory from a previous visit:\n${args.previousMemory}\nMake the new focus directly refer to one specific detail in that memory. Ask the user to notice what is the same or different. Give two simple actions for a ${args.durationMinutes}-minute visit.`;
@@ -113,6 +113,9 @@ export async function generateCard(args: {
       if (card.durationMinutes !== args.durationMinutes) throw new Error("Wrong duration");
       const coreWords = card.spokenScript.trim().split(/\s+/).length;
       if (coreWords < 25 || coreWords > 55) throw new Error("Wrong spoken length");
+      if (/\bI\s+(?:saw|noticed|observed|heard|felt|found)\b/i.test(card.spokenScript)) {
+        throw new Error("Narrator claimed a previous observation");
+      }
       return fieldCardSchema.parse({
         ...card,
         spokenScript: `Leave your phone here. ${card.spokenScript.trim()} Observe without touching, collecting, or disturbing living things.`,
@@ -126,7 +129,7 @@ export async function generateCard(args: {
 
 export async function compareObservations(first: string, second: string): Promise<string> {
   const content = await chatWithGemma(
-    "Return ONLY valid JSON with one key, summary. Write one or two sentences comparing only what the user reported. Use 'you noticed' or 'you reported'. Do not infer species, causes, or measurements. Maximum 280 characters.",
+    "Return ONLY valid JSON with one key, summary. Write one or two sentences comparing only what the user reported. Use 'you noticed' or 'you reported'. Preserve exact details, including singular versus plural. If both notes mention the same detail, say that both mention it; do not claim a change. Do not infer species, causes, measurements, or unreported details. Maximum 280 characters.",
     `First visit: ${first}\nSecond visit: ${second}`,
   );
   try {
