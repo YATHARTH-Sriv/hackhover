@@ -144,7 +144,7 @@ export async function synthesizeCard(visitId: string, script: string): Promise<s
     response = await fetch(`${ELEVENLABS_BASE}/text-to-speech/${encodeURIComponent(voiceId)}?output_format=mp3_44100_128`, {
       method: "POST",
       headers: { "xi-api-key": key, "Content-Type": "application/json" },
-      body: JSON.stringify({ text: script, model_id: process.env.ELEVENLABS_TTS_MODEL ?? "eleven_multilingual_v2" }),
+      body: JSON.stringify({ text: script, model_id: process.env.ELEVENLABS_TTS_MODEL ?? "eleven_flash_v2_5" }),
       signal: AbortSignal.timeout(45_000),
     });
   } catch {

@@ -9,6 +9,7 @@ Built for the Hacktoberfest 2026 Open-Source AI Challenge, Week 1: **Touch Grass
 - **Gemma 3 4B via Ollama** runs locally on the Mac and generates field cards and short comparisons.
 - **Backboard** stores and retrieves concise place-specific text memories. It is a hosted service.
 - **ElevenLabs** creates the pre-walk audio and transcribes the post-walk reflection. It is a hosted service.
+- The default speech model is Flash v2.5 to keep short demo cards inexpensive; generated MP3s are cached locally for replay.
 - **Next.js + TypeScript + SQLite** provide the desktop web app and local notebook. Raw reflection recordings are not persisted by the app; the user reviews the transcript before saving it.
 
 The app is designed for `localhost` on a laptop. The user leaves their phone behind during the visit. Internet is needed for Backboard and ElevenLabs calls. The field activity itself requires no device.
@@ -27,7 +28,7 @@ Ollama: <https://ollama.com/download> · Gemma 3: <https://ollama.com/library/ge
 ```bash
 cd one-tree-two-visits
 npm install
-cp .env.example .env.local
+cp .env.example .env
 export OLLAMA_MODELS="$PWD/data/models"
 ollama serve
 ```
@@ -42,13 +43,13 @@ ollama pull gemma3:4b
 
 Use the same `OLLAMA_MODELS` value for the server and pull commands. This workspace keeps the model under the ignored `data/models/` directory; if you prefer Ollama's default model directory, omit that export in both terminals.
 
-Fill in `BACKBOARD_API_KEY`, `ELEVENLABS_API_KEY`, and `ELEVENLABS_VOICE_ID` in `.env.local`, then run:
+Fill in `BACKBOARD_API_KEY` and `ELEVENLABS_API_KEY` in `.env`; the included voice ID is a starting choice. Then run:
 
 ```bash
 npm run dev
 ```
 
-Open <http://localhost:3000>. The home page shows which integrations are configured. The API keys remain server-side. `.env.local`, `data/`, the SQLite database, and generated audio are ignored by Git.
+Open <http://localhost:3000>. The home page shows which integrations are configured. The API keys remain server-side. `.env`, `.env.local`, `data/`, the SQLite database, and generated audio are ignored by Git. If you use both env files, `.env.local` takes precedence; avoid leaving blank key overrides there.
 
 If Ollama is already running, `ollama serve` will report that the port is in use; you can keep the existing server. If your Mac is slower with the 4B model, set `OLLAMA_MODEL` to another locally pulled open-weight model and report that change in the project write-up.
 
