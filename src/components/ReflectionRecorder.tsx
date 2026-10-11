@@ -87,13 +87,14 @@ export function ReflectionRecorder({ visitId, onTranscript }: Props) {
 
   return (
     <div className="recorder-panel">
-      <div className="recorder-head"><div className="recorder-icon"><Mic size={19} aria-hidden="true" /></div><div><strong>Speak what you noticed</strong><p>Thirty seconds is enough. Your recording is sent to ElevenLabs for transcription and is not saved here by default.</p></div></div>
+      <div className="recorder-head"><div className="recorder-icon"><Mic size={19} aria-hidden="true" /></div><div><strong>Speak what you noticed</strong><p>Thirty seconds is enough. We’ll turn it into words you can review.</p></div></div>
       <div className="recorder-actions">
         {recording ? <button type="button" className="button button-dark" onClick={stop}><Square size={15} aria-hidden="true" /> Stop recording</button>
           : <button type="button" className="button button-secondary" onClick={start} disabled={busy}><Mic size={16} aria-hidden="true" /> {audioBlob ? "Record again" : "Start recording"}</button>}
         {audioBlob && !recording && <button type="button" className="button button-primary" onClick={transcribe} disabled={busy} aria-busy={busy}><FileAudio size={16} aria-hidden="true" /> {busy ? "Transcribing…" : "Transcribe reflection"}</button>}
       </div>
       {recording && <p className="recording-indicator" role="status"><span /> Recording… It will stop after 90 seconds.</p>}
+      {busy && <div className="transcription-progress" role="status"><span>Turning your recording into text</span><span className="progress-line progress-indeterminate" role="progressbar" aria-label="Transcribing recording"><span /></span></div>}
       {audioBlob && audioUrl && !recording && <div className="recording-preview"><audio controls src={audioUrl} aria-label="Review your reflection recording" /><a href={audioUrl} download={`my-reflection.${audioBlob.type.includes("mp4") ? "m4a" : "webm"}`} className="text-link"><RotateCcw size={15} aria-hidden="true" /> Keep a copy before leaving</a></div>}
       {error && <p className="inline-error" role="alert">{error}</p>}
     </div>

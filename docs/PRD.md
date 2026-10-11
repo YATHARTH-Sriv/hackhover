@@ -1,4 +1,4 @@
-# Product requirements document: One Tree, Two Visits
+# Product requirements document: Hover
 
 **Version:** 1.1  
 **Prepared:** 9 October 2026  
@@ -8,7 +8,7 @@
 
 ## 1. Product summary
 
-One Tree, Two Visits helps someone notice one ordinary outdoor place more closely by visiting it twice. Before each visit, it gives them one short, spoken observation task. After the visit, they record what they noticed. On the second visit, the task refers to their own first observation, so the AI has a reason to remember rather than merely generate another generic walk suggestion.
+Hover helps someone notice one ordinary outdoor place more closely by visiting it twice. Before each visit, it gives them one short, spoken observation task. After the visit, they record what they noticed. On the second visit, the task refers to their own first observation, so the AI has a reason to remember rather than merely generate another generic walk suggestion.
 
 The emotional premise is simple: constant content fills every spare moment, leaving little room to be bored, think, or notice small things. The app creates a brief starting ritual, then sends the user out **without a phone**. Boredom and unstructured attention are part of the experience; the product does not try to fill the walk with continuous guidance.
 

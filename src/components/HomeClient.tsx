@@ -1,34 +1,24 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ArrowUpRight, Headphones, Leaf, Mic2, Plus, Sparkles } from "lucide-react";
+import { ArrowRight, ArrowUpRight, AudioLines, BookOpenText, BrainCircuit, ChevronDown, CirclePlay, MapPin, Sparkles } from "lucide-react";
 import type { PlaceSummary, Setting } from "@/lib/types";
 
-type Health = {
-  ollamaReady: boolean;
-  backboardConfigured: boolean;
-  elevenlabsConfigured: boolean;
-  model: string;
-};
-
 const settingLabels: Record<Setting, string> = {
-  tree: "Tree", planter: "Planter", garden: "Garden patch", other: "Other place",
+  tree: "Tree", planter: "Planter", garden: "Garden", other: "Other",
 };
 
 export function HomeClient({ initialPlaces }: { initialPlaces: PlaceSummary[] }) {
   const router = useRouter();
+  const savedPlaces = useRef<HTMLDetailsElement>(null);
   const [places, setPlaces] = useState(initialPlaces);
   const [nickname, setNickname] = useState("");
-  const [setting, setSetting] = useState<Setting>("tree");
+  const [setting, setSetting] = useState<Setting>("other");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [health, setHealth] = useState<Health | null>(null);
-
-  useEffect(() => {
-    fetch("/api/health").then((res) => res.json()).then(setHealth).catch(() => setHealth(null));
-  }, []);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -53,62 +43,89 @@ export function HomeClient({ initialPlaces }: { initialPlaces: PlaceSummary[] })
     }
   }
 
+  function closeSavedPlacesOnEscape(event: KeyboardEvent<HTMLDetailsElement>) {
+    if (event.key === "Escape" && savedPlaces.current?.open) {
+      savedPlaces.current.open = false;
+      savedPlaces.current.querySelector("summary")?.focus();
+    }
+  }
+
   return (
     <main>
-      <section className="hero-grid">
-        <div className="hero-copy">
-          <p className="eyebrow"><span className="eyebrow-dot" /> A quieter kind of outside</p>
-          <h1>Leave the noise.<br /><em>Find a place.</em></h1>
-          <p className="hero-lead">Every spare minute has something playing. This is a reason to let the world be quiet again. Pick one familiar place, hear a small invitation, and go there without your phone.</p>
-          <div className="three-steps" aria-label="How it works">
-            <div><span>01</span><Headphones size={18} aria-hidden="true" /><strong>Listen</strong><p>Hear one simple thing to notice.</p></div>
-            <div><span>02</span><Leaf size={18} aria-hidden="true" /><strong>Leave</strong><p>Go outside. Let yourself get bored.</p></div>
-            <div><span>03</span><Mic2 size={18} aria-hidden="true" /><strong>Return</strong><p>Tell your notebook what stayed with you.</p></div>
+      <section className="hero" aria-labelledby="hero-title">
+        <Image src="/hover-landscape.png" alt="" fill priority sizes="100vw" className="hero-landscape" />
+        <div className="hero-content">
+          <p className="hero-kicker">A small ritual for a fuller life</p>
+          <h1 id="hero-title"><span>Your agents are working.</span><br />Time to connect with yourself.</h1>
+          <p className="hero-description">Select a place, keep your phone at your desk, and experience boredom. Notice what you miss when nothing else is playing.</p>
+          <div className="hero-actions">
+            <form className="place-entry" onSubmit={submit} aria-busy={busy}>
+              <MapPin size={18} aria-hidden="true" />
+              <label className="sr-only" htmlFor="place-name">Place name</label>
+              <input id="place-name" name="place-name" value={nickname} onChange={(event) => setNickname(event.target.value)} placeholder="Enter your place" minLength={2} maxLength={80} autoComplete="off" required aria-invalid={Boolean(error)} aria-describedby={error ? "place-error" : undefined} />
+              <label className="sr-only" htmlFor="place-setting">Place type</label>
+              <select id="place-setting" name="place-setting" value={setting} onChange={(event) => setSetting(event.target.value as Setting)} aria-label="Place type">
+                {Object.entries(settingLabels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
+              </select>
+              <button type="submit" aria-label="Create place and set up visit" disabled={busy}><ArrowRight size={19} aria-hidden="true" /></button>
+            </form>
+            <details className="saved-places" ref={savedPlaces} onKeyDown={closeSavedPlacesOnEscape}>
+              <summary>Saved places <ChevronDown size={17} aria-hidden="true" /></summary>
+              <div className="saved-menu">
+                <p>Pick up where you left off</p>
+                {places.length === 0 ? <span className="saved-empty">No places yet. Name one to begin.</span> : places.map((place) => (
+                  <Link href={`/places/${place.id}`} key={place.id} onClick={() => { if (savedPlaces.current) savedPlaces.current.open = false; }}>
+                    <span><strong>{place.nickname}</strong><small>{place.visitCount} {place.visitCount === 1 ? "visit" : "visits"}</small></span><ArrowUpRight size={16} aria-hidden="true" />
+                  </Link>
+                ))}
+              </div>
+            </details>
           </div>
-        </div>
-        <div className="hero-side">
-          <div className="illustration-card" aria-hidden="true">
-            <div className="sun-disc" />
-            <div className="tree-trunk" />
-            <div className="tree-canopy canopy-one" />
-            <div className="tree-canopy canopy-two" />
-            <div className="tree-canopy canopy-three" />
-            <div className="ground-line" />
-            <span className="illustration-caption">The same place can hold a different day.</span>
-          </div>
-          <div className="quiet-note"><Sparkles size={18} aria-hidden="true" /><p>No endless prompts. No scroll to finish. The best part happens away from this screen.</p></div>
+          {busy && <div className="hero-loading" role="status"><span>Opening your place</span><span className="progress-line progress-indeterminate" aria-hidden="true"><span /></span></div>}
+          {error && <p className="hero-error" id="place-error" role="alert">{error}</p>}
         </div>
       </section>
 
-      <section className="home-lower" id="places">
-        <div className="places-panel">
-          <div className="section-heading"><div><p className="eyebrow">Your notebook</p><h2>Places you return to</h2></div><span className="place-count">{places.length} {places.length === 1 ? "place" : "places"}</span></div>
-          {places.length === 0 ? (
-            <div className="empty-places"><Leaf size={28} aria-hidden="true" /><h3>Start with somewhere close.</h3><p>A tree by your gate or a planter on your street is enough. Give it a name to begin.</p><a href="#new-place" className="text-link">Add your first place <ArrowUpRight size={16} aria-hidden="true" /></a></div>
-          ) : (
-            <div className="place-list">{places.map((place) => (
-              <Link href={`/places/${place.id}`} className="place-row" key={place.id}>
-                <span className="place-icon"><Leaf size={19} aria-hidden="true" /></span>
-                <span className="place-row-main"><strong>{place.nickname}</strong><small>{settingLabels[place.setting]} · {place.visitCount} {place.visitCount === 1 ? "visit" : "visits"}</small></span>
-                <ArrowUpRight size={19} aria-hidden="true" />
-              </Link>
-            ))}</div>
-          )}
-        </div>
+      <section className="how-section" id="how-it-works" aria-labelledby="how-heading">
+        <div className="section-inner">
+          <div className="how-heading"><p className="section-label">How Hover works</p><h2 id="how-heading">A little less input.<br /><span>A little more life.</span></h2><p>A prompt before you leave. Your own words when you return. A new reason to notice the same place next time.</p></div>
+          <div className="ritual-steps" aria-label="The visit ritual">
+            <div><span>01</span><strong>Choose a place</strong><p>Somewhere familiar is enough.</p></div>
+            <div><span>02</span><strong>Leave the screen</strong><p>Take one thought outside, then get bored.</p></div>
+            <div><span>03</span><strong>Come back</strong><p>Speak or write what stayed with you.</p></div>
+          </div>
 
-        <div className="create-panel" id="new-place">
-          <div className="section-heading"><div><p className="eyebrow">Begin here</p><h2>Choose one place</h2></div><Plus size={20} aria-hidden="true" /></div>
-          <p className="panel-intro">Keep it nearby. You’ll visit this same spot twice and notice what changes.</p>
-          <form onSubmit={submit} className="form-stack">
-            <div className="field"><label htmlFor="nickname">What do you call it?</label><input id="nickname" name="nickname" type="text" minLength={2} maxLength={80} required autoComplete="off" placeholder="The tree by my gate" value={nickname} onChange={(event) => setNickname(event.target.value)} /><span className="field-hint">A nickname is enough. No address needed.</span></div>
-            <div className="field"><label htmlFor="setting">What kind of place?</label><select id="setting" name="setting" value={setting} onChange={(event) => setSetting(event.target.value as Setting)}>{Object.entries(settingLabels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></div>
-            {error && <p className="inline-error" role="alert">{error}</p>}
-            <button className="button button-primary" type="submit" disabled={busy} aria-busy={busy}>{busy ? "Saving your place…" : "Make this my place"}<ArrowUpRight size={17} aria-hidden="true" /></button>
-          </form>
+          <div className="systems-heading"><p className="section-label">A quiet system behind the scenes</p><h3>Three tools. One reason to look up.</h3></div>
+          <div className="systems-grid">
+            <article className="system-card">
+              <div className="system-preview voice-preview" aria-hidden="true">
+                <div className="preview-top"><span>FIELD CARD / AUDIO</span><span>00:34</span></div>
+                <div className="voice-wave">{[28, 45, 65, 36, 77, 55, 89, 52, 72, 42, 91, 61, 38, 70, 48, 79, 54, 31, 66, 40, 24].map((height, index) => <i key={index} style={{ height: `${height}%` }} />)}</div>
+                <div className="voice-player"><CirclePlay size={30} /><span>Listen once. Then go.</span><span>01 / 01</span></div>
+              </div>
+              <div className="system-body"><div className="system-name"><AudioLines size={21} aria-hidden="true" /><span>ElevenLabs</span></div><h4>Hear it. Say it.</h4><ul><li>Turns a short field card into audio.</li><li>Transcribes your reflection after you return.</li></ul></div>
+            </article>
+            <article className="system-card">
+              <div className="system-preview memory-preview" aria-hidden="true">
+                <div className="preview-top"><span>PLACE MEMORY</span><span>VISIT 02</span></div>
+                <div className="memory-example"><span className="memory-node" /><p>“The air felt cooler near the garden.”</p><small>Remembered from your last visit</small></div>
+                <div className="memory-followup"><Sparkles size={15} /><span>What feels different today?</span></div>
+              </div>
+              <div className="system-body"><div className="system-name"><BookOpenText size={21} aria-hidden="true" /><span>Backboard</span></div><h4>A place that remembers.</h4><ul><li>Keeps the words you choose to save.</li><li>Brings a real detail into your next visit.</li></ul></div>
+            </article>
+            <article className="system-card system-card-wide">
+              <div className="system-preview model-preview" aria-hidden="true">
+                <div className="preview-top"><span>LOCAL MODEL / GEMMA 3</span><span>ON YOUR MAC</span></div>
+                <div className="model-screen"><span className="model-cursor" /><p>From your last note: cooler air.</p><strong>Notice one thing that changed, and one that stayed.</strong></div>
+                <div className="model-status"><span /><span>Field card ready</span></div>
+              </div>
+              <div className="system-body"><div className="system-name"><BrainCircuit size={21} aria-hidden="true" /><span>Gemma via Ollama</span></div><h4>The thinking stays close.</h4><ul><li>Writes your short observation card on your Mac.</li><li>Uses retrieved memory to make the next one personal.</li><li>Leaves the walk itself to you.</li></ul></div>
+            </article>
+          </div>
         </div>
       </section>
 
-      <section className="setup-strip" aria-label="Local setup status"><span className="eyebrow">Local setup</span>{health ? <><span className={health.ollamaReady ? "status ready" : "status"}>{health.ollamaReady ? `${health.model} ready` : `${health.model} not ready`}</span><span className={health.backboardConfigured ? "status ready" : "status"}>{health.backboardConfigured ? "Backboard key set" : "Backboard key needed"}</span><span className={health.elevenlabsConfigured ? "status ready" : "status"}>{health.elevenlabsConfigured ? "ElevenLabs key set" : "ElevenLabs key needed"}</span></> : <span>Checking your local setup…</span>}</section>
+      <section className="closing-strip"><span>Less to scroll. More to notice.</span><a href="#hero-title">Start with a place <ArrowUpRight size={17} aria-hidden="true" /></a></section>
     </main>
   );
 }
