@@ -37,7 +37,9 @@ export function ReflectionRecorder({ visitId, onTranscript }: Props) {
       return;
     }
     try {
-      stream.current = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.current = await navigator.mediaDevices.getUserMedia({
+        audio: { noiseSuppression: true, echoCancellation: true, autoGainControl: true },
+      });
       const preferred = ["audio/webm", "audio/mp4"].find((mime) => MediaRecorder.isTypeSupported(mime));
       chunks.current = [];
       const mediaRecorder = new MediaRecorder(stream.current, preferred ? { mimeType: preferred } : undefined);

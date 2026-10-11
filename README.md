@@ -14,6 +14,17 @@ Built for the Hacktoberfest 2026 Open-Source AI Challenge, Week 1: **Touch Grass
 
 The app is designed for `localhost` on a laptop. The user leaves their phone behind during the visit. Internet is needed for Backboard and ElevenLabs calls. The field activity itself requires no device.
 
+### What each service does
+
+| Part | Responsibility |
+| --- | --- |
+| Ollama + Gemma 3 4B | Generates the observation card locally. On later visits it uses a retrieved prior note to make a relevant follow-up; it can also compare two confirmed notes. |
+| ElevenLabs | Speaks each card before the walk and transcribes a recording after the walk. Scribe is asked to omit non-speech events, fillers, and false starts. |
+| Backboard | Holds text memories for each named place. Only after the user saves a reflection does the app send that confirmed text to Backboard; before the next card, the app retrieves it and passes it to Gemma. |
+| Next.js + SQLite | Runs the browser interface and stores places, visits, cards, confirmed notes, and cached speech on the Mac. |
+
+Backboard does not write the field card or receive the raw recording. ElevenLabs does not decide what the next observation task should be.
+
 ## Requirements
 
 - Node.js 24.10 or newer

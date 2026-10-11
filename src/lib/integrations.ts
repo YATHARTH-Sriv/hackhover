@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fieldCardSchema } from "./schemas";
+import { cleanTranscript } from "./transcript";
 import type { FieldCard, Setting } from "./types";
 
 const BACKBOARD_BASE = "https://app.backboard.io/api";
@@ -165,6 +166,8 @@ export async function transcribeReflection(file: File): Promise<string> {
   const key = requiredEnv("ELEVENLABS_API_KEY", "ElevenLabs");
   const form = new FormData();
   form.set("model_id", "scribe_v2");
+  form.set("tag_audio_events", "false");
+  form.set("no_verbatim", "true");
   form.set("file", file, file.name || "reflection.webm");
   let response: Response;
   try {
@@ -177,6 +180,7 @@ export async function transcribeReflection(file: File): Promise<string> {
   }
   if (!response.ok) throw new IntegrationError("ElevenLabs", `Transcription failed (${response.status}). Retry or type your reflection.`);
   const result = (await response.json()) as { text?: string };
-  if (!result.text?.trim()) throw new IntegrationError("ElevenLabs", "No speech was detected. Try again or type your reflection.");
-  return result.text.trim();
+  const transcript = cleanTranscript(result.text ?? "");
+  if (!transcript) throw new IntegrationError("ElevenLabs", "No speech was detected. Try again or type your reflection.");
+  return transcript;
 }
