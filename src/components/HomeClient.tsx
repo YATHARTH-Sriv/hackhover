@@ -53,7 +53,7 @@ export function HomeClient({ initialPlaces }: { initialPlaces: PlaceSummary[] })
   return (
     <main>
       <section className="hero" aria-labelledby="hero-title">
-        <Image src="/hover-landscape.png" alt="" fill priority sizes="100vw" className="hero-landscape" />
+        <Image src="/hover-landscape-color.png" alt="" fill priority sizes="100vw" className="hero-landscape" />
         <div className="hero-content">
           <p className="hero-kicker">A small ritual for a fuller life</p>
           <h1 id="hero-title"><span>Your agents are working.</span><br />Time to connect with yourself.</h1>
