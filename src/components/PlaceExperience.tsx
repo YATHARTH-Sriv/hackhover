@@ -124,8 +124,10 @@ export function PlaceExperience({ initialPlace }: { initialPlace: Place }) {
             ) : (
               <div className="start-visit-panel">
                 <div className="start-visit-copy"><span className="mini-label">YOUR NEXT MOMENT OUTSIDE</span><h3>A little space to be bored.</h3><p>Hover will give you one simple thing to notice at {place.nickname}. Hear it once, then go without your phone.</p></div>
-                <fieldset className="duration-picker"><legend>How long will you stay?</legend><label><input type="radio" name="duration" value="10" checked={duration === 10} onChange={() => setDuration(10)} /> 10 minutes</label><label><input type="radio" name="duration" value="15" checked={duration === 15} onChange={() => setDuration(15)} /> 15 minutes</label></fieldset>
-                <button type="button" className="button button-primary" onClick={beginVisit} disabled={busy} aria-busy={busy}>{busy ? "Preparing…" : "Prepare my visit"}<ArrowRight size={17} aria-hidden="true" /></button>
+                <div className="start-visit-controls">
+                  <fieldset className="duration-picker"><legend>How long will you stay?</legend><label><input type="radio" name="duration" value="10" checked={duration === 10} onChange={() => setDuration(10)} /> 10 minutes</label><label><input type="radio" name="duration" value="15" checked={duration === 15} onChange={() => setDuration(15)} /> 15 minutes</label></fieldset>
+                  <button type="button" className="button button-primary" onClick={beginVisit} disabled={busy} aria-busy={busy}>{busy ? "Preparing…" : "Prepare my visit"}<ArrowRight size={17} aria-hidden="true" /></button>
+                </div>
               </div>
             )}
           </div>
@@ -149,9 +151,11 @@ export function PlaceExperience({ initialPlace }: { initialPlace: Place }) {
       {completedVisit && <div className="completion-panel"><div><span className="mini-label">VISIT COMPLETE</span><h2>There’s always more to notice.</h2><p>Return to the same place another time. Hover will remember what you shared.</p></div><button type="button" className="button button-secondary" onClick={() => { setShowNewVisit(true); setNotice(null); }}>Set up another visit <ArrowRight size={17} aria-hidden="true" /></button></div>}
 
       <section className="explore-section" aria-labelledby="explore-heading">
-        <div className="explore-heading"><div><p className="mini-label">EXPLORE MORE</p><h2 id="explore-heading">Your place, over time.</h2><p>A quiet record of the days you came back.</p></div><span>{place.visits.length} {place.visits.length === 1 ? "visit" : "visits"}</span></div>
-        {place.visits.length === 0 ? <div className="archive-empty"><Leaf size={22} aria-hidden="true" /><p>Your visit archive begins after the first field card.</p></div> : <div className="archive-grid">{place.visits.map((visit) => <article className="archive-card" key={visit.id}><div className="archive-meta"><span>VISIT {visit.ordinal.toString().padStart(2, "0")}</span><time dateTime={visit.createdAt}>{readableDate(visit.createdAt)}</time></div><h3>{visit.card.title}</h3>{visit.observation ? <><p className="archive-note">“{visit.observation.noteText}”</p>{visit.observation.memoryStatus === "pending" && <button type="button" className="text-link" onClick={() => retryMemory(visit.observation!.id)} disabled={busy}><RotateCcw size={14} aria-hidden="true" /> Retry memory sync</button>}</> : <p className="archive-pending">Waiting for your reflection.</p>}{visit.retrievedMemory && <details className="memory-proof"><summary>What this visit remembered</summary><p>{visit.retrievedMemory}</p></details>}</article>)}</div>}
-        {place.comparison && <div className="comparison-card"><span><Sparkles size={17} aria-hidden="true" /> Across visits</span><p>{place.comparison}</p></div>}
+        <details className="explore-disclosure">
+          <summary className="explore-heading"><div><p className="mini-label">EXPLORE MORE</p><h2 id="explore-heading">Your place, over time.</h2></div><span>{place.visits.length} {place.visits.length === 1 ? "visit" : "visits"} <ArrowRight size={16} aria-hidden="true" /></span></summary>
+          {place.visits.length === 0 ? <div className="archive-empty"><Leaf size={22} aria-hidden="true" /><p>Your visit archive begins after the first field card.</p></div> : <div className="archive-grid">{place.visits.map((visit) => <article className="archive-card" key={visit.id}><div className="archive-meta"><span>VISIT {visit.ordinal.toString().padStart(2, "0")}</span><time dateTime={visit.createdAt}>{readableDate(visit.createdAt)}</time></div><h3>{visit.card.title}</h3>{visit.observation ? <><p className="archive-note">“{visit.observation.noteText}”</p>{visit.observation.memoryStatus === "pending" && <button type="button" className="text-link" onClick={() => retryMemory(visit.observation!.id)} disabled={busy}><RotateCcw size={14} aria-hidden="true" /> Retry memory sync</button>}</> : <p className="archive-pending">Waiting for your reflection.</p>}{visit.retrievedMemory && <details className="memory-proof"><summary>What this visit remembered</summary><p>{visit.retrievedMemory}</p></details>}</article>)}</div>}
+          {place.comparison && <div className="comparison-card"><span><Sparkles size={17} aria-hidden="true" /> Across visits</span><p>{place.comparison}</p></div>}
+        </details>
       </section>
     </main>
   );
