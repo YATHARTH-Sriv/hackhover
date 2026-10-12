@@ -1,4 +1,4 @@
-# Hover
+# projecthover
 
 A small desktop ritual for getting outside without a phone. Hear one brief field card, leave the screen, visit one familiar place, then return and say what you noticed. The next card refers to your actual previous observation.
 
@@ -6,7 +6,7 @@ Built for the Hacktoberfest 2026 Open-Source AI Challenge, Week 1: **Touch Grass
 
 ## What is running where
 
-- **Gemma 3 4B via Ollama** runs locally on the Mac and generates field cards and short comparisons.
+- **Gemma 3 4B via Ollama** runs locally on the Machine and generates field cards and short comparisons.
 - **Backboard** stores and retrieves concise place-specific text memories. It is a hosted service.
 - **ElevenLabs** creates the pre-walk audio and transcribes the post-walk reflection. It is a hosted service.
 - The default speech model is Flash v2.5 to keep short demo cards inexpensive; generated MP3s are cached locally for replay.
@@ -21,7 +21,7 @@ The app is designed for `localhost` on a laptop. The user leaves their phone beh
 | Ollama + Gemma 3 4B | Generates the observation card locally. On later visits it uses a retrieved prior note to make a relevant follow-up; it can also compare two confirmed notes. |
 | ElevenLabs | Speaks each card before the walk and transcribes a recording after the walk. Scribe is asked to omit non-speech events, fillers, and false starts. |
 | Backboard | Holds text memories for each named place. Only after the user saves a reflection does the app send that confirmed text to Backboard; before the next card, the app retrieves it and passes it to Gemma. |
-| Next.js + SQLite | Runs the browser interface and stores places, visits, cards, confirmed notes, and cached speech on the Mac. |
+| Next.js + SQLite | Runs the browser interface and stores places, visits, cards, confirmed notes, and cached speech on the Machine. |
 
 Backboard does not write the field card or receive the raw recording. ElevenLabs does not decide what the next observation task should be.
 
@@ -37,7 +37,7 @@ Ollama: <https://ollama.com/download> · Gemma 3: <https://ollama.com/library/ge
 ## Setup
 
 ```bash
-cd one-tree-two-visits
+cd projecthover
 npm install
 cp .env.example .env
 export OLLAMA_MODELS="$PWD/data/models"
@@ -47,7 +47,7 @@ ollama serve
 In another terminal, pull the model:
 
 ```bash
-cd one-tree-two-visits
+cd projecthover
 export OLLAMA_MODELS="$PWD/data/models"
 ollama pull gemma3:4b
 ```
@@ -62,7 +62,7 @@ npm run dev
 
 Open <http://localhost:3000>. The home page shows which integrations are configured. The API keys remain server-side. `.env`, `.env.local`, `data/`, the SQLite database, and generated audio are ignored by Git. If you use both env files, `.env.local` takes precedence; avoid leaving blank key overrides there.
 
-If Ollama is already running, `ollama serve` will report that the port is in use; you can keep the existing server. If your Mac is slower with the 4B model, set `OLLAMA_MODEL` to another locally pulled open-weight model and report that change in the project write-up.
+If Ollama is already running, `ollama serve` will report that the port is in use; you can keep the existing server. If your Machine is slower with the 4B model, set `OLLAMA_MODEL` to another locally pulled open-weight model and report that change in the project write-up.
 
 ## User flow
 
@@ -71,7 +71,7 @@ If Ollama is already running, `ollama serve` will report that the port is in use
 3. Leave the laptop and phone behind. Visit the place.
 4. Return and record a short reflection in the browser, or type it. Review and edit the transcript.
 5. Save it. The note stays in local SQLite; a concise copy is sent to Backboard memory.
-6. Prepare a second card. The app searches that place's Backboard memory and passes the retrieved note to Gemma. The previous memory is visible in the visit timeline for a transparent demo.
+6. Prepare a second card. The app searches that place's Backboard memory, selects the highest-ranked source note, and passes it to Gemma. The exact retrieved note can be opened on the new card and remains visible in the visit timeline.
 
 If Backboard is temporarily unavailable when saving a note, the note still saves locally and the notebook offers **Retry memory sync**. If ElevenLabs audio fails, the text card remains and **Retry audio** uses the same visit.
 
@@ -84,14 +84,3 @@ npm run build
 
 The app uses `better-sqlite3` for local persistence. Keep the Node version pinned when running the demo so the native package stays compatible.
 
-## API and data
-
-The Next.js Route Handlers are under `src/app/api/`. `GET /api/health` reports service readiness without exposing secrets. `POST /api/places` creates a local place and, when configured, a Backboard assistant. `POST /api/places/:id/visits` creates the next card. `POST /api/visits/:id/transcribe` returns editable text. `POST /api/visits/:id/observation` saves the approved reflection. Retry routes recover audio and memory calls.
-
-Local data is stored in `data/visits.sqlite`; MP3s are stored under `data/audio/`. Neither is committed. A transcript is sent to Backboard only when the user presses **Save this visit**. The audio recording is sent to ElevenLabs only when the user presses **Transcribe reflection** and is not saved to disk by this app.
-
-## Demo and prize evidence
-
-The intended $100 categories are **Best Use of Backboard** and **Best Use of ElevenLabs**. The demo should show the first note, Backboard retrieval, the personalized second card, ElevenLabs speech playback, and ElevenLabs transcription. Only list a category in the DEV post when its live integration has been demonstrated. The video should include real, separate visits to the chosen place and honest observations. See the [PRD](docs/PRD.md) for the full scope and submission schedule.
-
-The [demo checklist](docs/demo-script.md) lists the real-visit evidence to capture. The two-visit timeline is the MVP. Photos and a gentle per-place scrapbook/streak are later-stage ideas.

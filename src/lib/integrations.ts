@@ -41,7 +41,7 @@ async function backboardRequest<T>(endpoint: string, body: unknown): Promise<T> 
 
 export async function createBackboardAssistant(nickname: string): Promise<string> {
   const result = await backboardRequest<{ assistant_id?: string }>("/assistants", {
-    name: `One Tree — ${nickname}`,
+    name: `projecthover — ${nickname}`,
     system_prompt: "Store only the user's observations about this place. Do not infer species or precise location.",
   });
   if (!result.assistant_id) throw new IntegrationError("Backboard", "Assistant creation returned no ID.");
@@ -58,7 +58,7 @@ export async function addBackboardMemory(
     `/assistants/${encodeURIComponent(assistantId)}/memories`,
     {
       content: `Visit ${visitNumber} on ${date}: ${note}`,
-      metadata: { source: "one-tree-two-visits", visit_number: visitNumber, observed_at: date },
+      metadata: { source: "projecthover", visit_number: visitNumber, observed_at: date },
     },
   );
   if (!result.memory_id) throw new IntegrationError("Backboard", "Memory save returned no ID.");
@@ -70,7 +70,9 @@ export async function searchBackboardMemory(assistantId: string, nickname: strin
     `/assistants/${encodeURIComponent(assistantId)}/memories/search`,
     { query: `What has the user actually noticed on previous visits to ${nickname}?`, limit: 3 },
   );
-  return (result.memories ?? []).map((memory) => memory.content?.trim()).filter(Boolean).join("\n");
+  // Backboard ranks search results. Keep the strongest source note visible and
+  // give the local model one clear observation to build on.
+  return result.memories?.find((memory) => memory.content?.trim())?.content?.trim() ?? "";
 }
 
 type ChatResponse = { message?: { content?: string }; error?: string };
@@ -157,9 +159,10 @@ export async function synthesizeCard(visitId: string, script: string): Promise<s
   if (!response.ok) throw new IntegrationError("ElevenLabs", `Speech generation failed (${response.status}). Check the key, voice, and credits.`);
   const dir = path.resolve(/*turbopackIgnore: true*/ process.cwd(), process.env.AUDIO_DIR ?? "./data/audio");
   await mkdir(dir, { recursive: true });
-  const filePath = path.join(dir, `${visitId}.mp3`);
+  const fileName = `${visitId}.mp3`;
+  const filePath = path.join(dir, fileName);
   await writeFile(filePath, Buffer.from(await response.arrayBuffer()));
-  return filePath;
+  return fileName;
 }
 
 export async function transcribeReflection(file: File): Promise<string> {

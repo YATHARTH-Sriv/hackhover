@@ -15,6 +15,7 @@ export function ReflectionRecorder({ visitId, onTranscript }: Props) {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [transcribed, setTranscribed] = useState(false);
 
   useEffect(() => {
     if (!audioBlob) return;
@@ -31,6 +32,7 @@ export function ReflectionRecorder({ visitId, onTranscript }: Props) {
 
   async function start() {
     setError(null);
+    setTranscribed(false);
     setAudioBlob(null);
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
       setError("This browser cannot record audio here. You can type your reflection below.");
@@ -78,6 +80,7 @@ export function ReflectionRecorder({ visitId, onTranscript }: Props) {
       if (!response.ok) throw new Error(result.error ?? "Could not transcribe the recording.");
       onTranscript(result.transcript);
       setAudioBlob(null);
+      setTranscribed(true);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not transcribe. Try again or type below.");
     } finally {
@@ -96,6 +99,7 @@ export function ReflectionRecorder({ visitId, onTranscript }: Props) {
       {recording && <p className="recording-indicator" role="status"><span /> Recording… It will stop after 90 seconds.</p>}
       {busy && <div className="transcription-progress" role="status"><span>Turning your recording into text</span><span className="progress-line progress-indeterminate" role="progressbar" aria-label="Transcribing recording"><span /></span></div>}
       {audioBlob && audioUrl && !recording && <div className="recording-preview"><audio controls src={audioUrl} aria-label="Review your reflection recording" /><a href={audioUrl} download={`my-reflection.${audioBlob.type.includes("mp4") ? "m4a" : "webm"}`} className="text-link"><RotateCcw size={15} aria-hidden="true" /> Keep a copy before leaving</a></div>}
+      {transcribed && <p className="transcript-ready" role="status">ElevenLabs transcribed your reflection. Review the words below before saving.</p>}
       {error && <p className="inline-error" role="alert">{error}</p>}
     </div>
   );

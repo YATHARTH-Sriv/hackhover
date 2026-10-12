@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Github, ArrowUpRight } from "lucide-react";
-import { Host_Grotesk } from "next/font/google";
+import { Caveat, Host_Grotesk } from "next/font/google";
 import "./globals.css";
 
 const grotesk = Host_Grotesk({
@@ -11,18 +11,25 @@ const grotesk = Host_Grotesk({
   variable: "--font-host-grotesk",
 });
 
+const scrapbookHand = Caveat({
+  subsets: ["latin"],
+  weight: "400",
+  display: "swap",
+  variable: "--font-scrapbook-hand",
+});
+
 export const metadata: Metadata = {
-  title: "Hover — Time to connect with yourself",
+  title: "hover — Time to connect with yourself",
   description: "Select a place, leave your phone at your desk, and make room to notice the world again.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={grotesk.variable}>
+    <html lang="en" className={`${grotesk.variable} ${scrapbookHand.variable}`}>
       <body>
         <div className="site-shell">
           <header className="site-header">
-            <Link href="/" className="wordmark" aria-label="Hover home">hover<span className="wordmark-period">.</span></Link>
+            <Link href="/" className="wordmark" aria-label="hover home">hover<span className="wordmark-period">.</span></Link>
             <nav className="site-nav" aria-label="Main navigation">
               <span className="nav-placeholder" aria-disabled="true" title="GitHub link coming soon"><Github size={17} aria-hidden="true" /> GitHub</span>
               <Link href="/#how-it-works">How it works</Link>
@@ -31,7 +38,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           </header>
           {children}
           <footer className="site-footer">
-            <span>© Hover. A little room to notice.</span>
+            <span>© hover. A little room to notice.</span>
             <span>Leave the screen. Come back with a story.</span>
           </footer>
         </div>

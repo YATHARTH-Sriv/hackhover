@@ -1,14 +1,20 @@
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
 import type { FieldCard, Observation, Place, PlaceSummary, Setting, Visit } from "./types";
 
 const databasePath = path.resolve(/*turbopackIgnore: true*/ process.cwd(), process.env.DATABASE_PATH ?? "./data/visits.sqlite");
+const audioDirectory = path.resolve(/*turbopackIgnore: true*/ process.cwd(), process.env.AUDIO_DIR ?? "./data/audio");
 mkdirSync(path.dirname(databasePath), { recursive: true });
 
-const globalDb = globalThis as typeof globalThis & { __oneTreeDb?: Database.Database };
-export const db = globalDb.__oneTreeDb ?? new Database(databasePath);
-globalDb.__oneTreeDb = db;
+function resolveAudioPath(storedPath: string | null): string | null {
+  if (!storedPath) return null;
+  return path.isAbsolute(storedPath) ? storedPath : path.join(audioDirectory, storedPath);
+}
+
+const globalDb = globalThis as typeof globalThis & { __projectHoverDb?: Database.Database };
+export const db = globalDb.__projectHoverDb ?? new Database(databasePath);
+globalDb.__projectHoverDb = db;
 
 db.exec(`
   PRAGMA foreign_keys = ON;
@@ -107,10 +113,11 @@ function toObservation(row: ObservationRow): Observation {
 
 function toVisit(row: VisitRow): Visit {
   const observation = db.prepare("SELECT * FROM observations WHERE visit_id = ?").get(row.id) as ObservationRow | undefined;
+  const audioPath = resolveAudioPath(row.audio_path);
   return {
     id: row.id, placeId: row.place_id, ordinal: row.ordinal,
     card: JSON.parse(row.card_json) as FieldCard,
-    audioReady: Boolean(row.audio_path), audioError: row.audio_error,
+    audioReady: Boolean(audioPath && existsSync(/*turbopackIgnore: true*/ audioPath)), audioError: row.audio_error,
     retrievedMemory: row.retrieved_memory, createdAt: row.created_at,
     observation: observation ? toObservation(observation) : null,
   };
@@ -123,7 +130,7 @@ export function getVisit(id: string): Visit | null {
 
 export function getVisitAudioPath(id: string): string | null {
   const row = db.prepare("SELECT audio_path FROM visits WHERE id = ?").get(id) as { audio_path: string | null } | undefined;
-  return row?.audio_path ?? null;
+  return resolveAudioPath(row?.audio_path ?? null);
 }
 
 export function createVisit(placeId: string, card: FieldCard, retrievedMemory: string | null): Visit {

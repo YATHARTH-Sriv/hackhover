@@ -92,7 +92,7 @@ export function PlaceExperience({ initialPlace }: { initialPlace: Place }) {
 
   return (
     <main className="place-page">
-      <Link href="/" className="back-link"><ArrowLeft size={17} aria-hidden="true" /> Back to Hover</Link>
+      <Link href="/" className="back-link"><ArrowLeft size={17} aria-hidden="true" /> Back to main</Link>
       <div className="setup-heading">
         <div><p className="setup-overline">Your place / {place.nickname}</p><h1>Set up your visit</h1><p className="setup-subtitle">One small invitation. The rest is yours to notice.</p></div>
         <div className="progress-summary"><span>{stepsComplete} of 2 complete</span><progress max={2} value={stepsComplete} aria-label="Visit steps completed" /></div>
@@ -117,13 +117,14 @@ export function PlaceExperience({ initialPlace }: { initialPlace: Place }) {
                 <div className="field-card-meta"><span>VISIT {active.ordinal.toString().padStart(2, "0")}</span><span><Clock3 size={15} aria-hidden="true" /> {active.card.durationMinutes} MIN</span></div>
                 <h3>{active.card.title}</h3>
                 <p className="field-card-focus">{active.card.focus}</p>
+                {active.retrievedMemory && <details className="previous-memory"><summary>What you noticed before</summary><p>{active.retrievedMemory}</p></details>}
                 <ol className="action-list">{active.card.actions.map((action, index) => <li key={index}><span>0{index + 1}</span>{action}</li>)}</ol>
                 <div className="audio-panel"><div className="audio-heading"><AudioLines size={19} aria-hidden="true" /><div><strong>Listen before you go</strong><p>Your field card is ready to hear.</p></div></div>{active.audioReady ? <audio key={active.id} controls preload="none" src={`/api/visits/${active.id}/audio`} aria-label="Listen to your field card" /> : <div className="audio-error"><p>{active.audioError ?? "Audio is not ready yet."}</p><button type="button" className="button button-secondary" onClick={() => retryAudio(active)} disabled={busy}><RotateCcw size={15} aria-hidden="true" /> Retry audio</button></div>}</div>
                 <div className="field-card-footer"><p>Go to {place.nickname}. Take your time. There is nothing to complete outside.</p><button type="button" className="button button-primary" onClick={() => setReturned(true)}>I’m back <ArrowRight size={17} aria-hidden="true" /></button></div>
               </div>
             ) : (
               <div className="start-visit-panel">
-                <div className="start-visit-copy"><span className="mini-label">YOUR NEXT MOMENT OUTSIDE</span><h3>A little space to be bored.</h3><p>Hover will give you one simple thing to notice at {place.nickname}. Hear it once, then go without your phone.</p></div>
+                <div className="start-visit-copy"><span className="mini-label">YOUR NEXT MOMENT OUTSIDE</span><h3>A little space to be bored.</h3><p>projecthover will give you one simple thing to notice at {place.nickname}. Hear it once, then go without your phone.</p></div>
                 <div className="start-visit-controls">
                   <fieldset className="duration-picker"><legend>How long will you stay?</legend><label><input type="radio" name="duration" value="10" checked={duration === 10} onChange={() => setDuration(10)} /> 10 minutes</label><label><input type="radio" name="duration" value="15" checked={duration === 15} onChange={() => setDuration(15)} /> 15 minutes</label></fieldset>
                   <button type="button" className="button button-primary" onClick={beginVisit} disabled={busy} aria-busy={busy}>{busy ? "Preparing…" : "Prepare my visit"}<ArrowRight size={17} aria-hidden="true" /></button>
@@ -148,13 +149,44 @@ export function PlaceExperience({ initialPlace }: { initialPlace: Place }) {
         </section>
       </div>
 
-      {completedVisit && <div className="completion-panel"><div><span className="mini-label">VISIT COMPLETE</span><h2>There’s always more to notice.</h2><p>Return to the same place another time. Hover will remember what you shared.</p></div><button type="button" className="button button-secondary" onClick={() => { setShowNewVisit(true); setNotice(null); }}>Set up another visit <ArrowRight size={17} aria-hidden="true" /></button></div>}
+      {completedVisit && <div className="completion-panel"><div><span className="mini-label">VISIT COMPLETE</span><h2>There’s always more to notice.</h2><p>Return to the same place another time. hover will remember what you shared.</p></div><button type="button" className="button button-secondary" onClick={() => { setShowNewVisit(true); setNotice(null); }}>Set up another visit <ArrowRight size={17} aria-hidden="true" /></button></div>}
 
       <section className="explore-section" aria-labelledby="explore-heading">
         <details className="explore-disclosure">
           <summary className="explore-heading"><div><p className="mini-label">EXPLORE MORE</p><h2 id="explore-heading">Your place, over time.</h2></div><span>{place.visits.length} {place.visits.length === 1 ? "visit" : "visits"} <ArrowRight size={16} aria-hidden="true" /></span></summary>
-          {place.visits.length === 0 ? <div className="archive-empty"><Leaf size={22} aria-hidden="true" /><p>Your visit archive begins after the first field card.</p></div> : <div className="archive-grid">{place.visits.map((visit) => <article className="archive-card" key={visit.id}><div className="archive-meta"><span>VISIT {visit.ordinal.toString().padStart(2, "0")}</span><time dateTime={visit.createdAt}>{readableDate(visit.createdAt)}</time></div><h3>{visit.card.title}</h3>{visit.observation ? <><p className="archive-note">“{visit.observation.noteText}”</p>{visit.observation.memoryStatus === "pending" && <button type="button" className="text-link" onClick={() => retryMemory(visit.observation!.id)} disabled={busy}><RotateCcw size={14} aria-hidden="true" /> Retry memory sync</button>}</> : <p className="archive-pending">Waiting for your reflection.</p>}{visit.retrievedMemory && <details className="memory-proof"><summary>What this visit remembered</summary><p>{visit.retrievedMemory}</p></details>}</article>)}</div>}
-          {place.comparison && <div className="comparison-card"><span><Sparkles size={17} aria-hidden="true" /> Across visits</span><p>{place.comparison}</p></div>}
+          {place.visits.length === 0 ? (
+            <div className="archive-empty"><Leaf size={22} aria-hidden="true" /><p>Your scrapbook begins after the first visit.</p></div>
+          ) : (
+            <div className="scrapbook">
+              <div className="scrapbook-intro">
+                <span className="scrapbook-eyebrow">THE FIELD NOTES / {place.nickname}</span>
+                <p className="scrapbook-script">Every visit leaves a little mark.</p>
+                <p className="scrapbook-intro-copy">A place changes slowly. Follow the details you noticed each time you returned.</p>
+                <span className="scrapbook-count">{place.visits.length.toString().padStart(2, "0")} MOMENTS KEPT</span>
+              </div>
+              <div className="scrapbook-path" role="list" aria-label={`Visits to ${place.nickname} in order`}>
+                {place.visits.slice().reverse().map((visit) => (
+                  <div className="scrapbook-entry" role="listitem" key={visit.id}>
+                    <span className="scrapbook-joint" aria-hidden="true" />
+                    <article className="stamp-card">
+                      <div className="stamp-topline"><span>VISIT {visit.ordinal.toString().padStart(2, "0")}</span><time dateTime={visit.createdAt}>{readableDate(visit.createdAt)}</time></div>
+                      <h3>{visit.card.title}</h3>
+                      <p className="stamp-focus">{visit.card.focus}</p>
+                      {visit.observation ? (
+                        <p className="stamp-note">“{visit.observation.noteText}”</p>
+                      ) : (
+                        <p className="stamp-pending">A thought from this visit is still waiting to be written.</p>
+                      )}
+                      <div className="stamp-bottomline"><span>{place.nickname}</span><span aria-hidden="true">HOVER · FIELD NOTE</span></div>
+                      {visit.observation?.memoryStatus === "pending" && <button type="button" className="text-link" onClick={() => retryMemory(visit.observation!.id)} disabled={busy}><RotateCcw size={14} aria-hidden="true" /> Retry memory sync</button>}
+                      {visit.retrievedMemory && <details className="memory-proof"><summary>What this visit remembered</summary><p>{visit.retrievedMemory}</p></details>}
+                    </article>
+                  </div>
+                ))}
+                {place.comparison && <div className="scrapbook-entry scrapbook-last" role="listitem"><span className="scrapbook-joint" aria-hidden="true" /><aside className="scrapbook-connection"><span><Sparkles size={16} aria-hidden="true" /> BETWEEN VISITS</span><p>{place.comparison}</p></aside></div>}
+              </div>
+            </div>
+          )}
         </details>
       </section>
     </main>
